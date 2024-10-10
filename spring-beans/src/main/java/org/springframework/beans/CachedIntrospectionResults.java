@@ -22,6 +22,8 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.net.URL;
+import java.security.ProtectionDomain;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -260,9 +262,17 @@ public class CachedIntrospectionResults {
 			// This call is slow so we do it once.
 			PropertyDescriptor[] pds = this.beanInfo.getPropertyDescriptors();
 			for (PropertyDescriptor pd : pds) {
-				if (Class.class.equals(beanClass) && "classLoader".equals(pd.getName())) {
-					// Ignore Class.getClassLoader() method - nobody needs to bind to that
+				if (Class.class == beanClass && (!"name".equals(pd.getName()) && !pd.getName().endsWith("Name"))) {
+					// Only allow all name variants of Class properties
 					continue;
+				}
+				if (URL.class == beanClass && "content".equals(pd.getName())) {
+					// Only allow URL attribute introspection, not content resolution
+					continue;
+				}
+				if (pd.getWriteMethod() == null && isInvalidReadOnlyPropertyType(pd.getPropertyType())) {
+					// Ignore read-only properties such as ClassLoader - no need to bind to those
+										continue;
 				}
 				if (logger.isTraceEnabled()) {
 					logger.trace("Found bean property '" + pd.getName() + "'" +
@@ -271,6 +281,10 @@ public class CachedIntrospectionResults {
 									"; editor [" + pd.getPropertyEditorClass().getName() + "]" : ""));
 				}
 				pd = buildGenericTypeAwarePropertyDescriptor(beanClass, pd);
+				if (pd.getWriteMethod() == null && isInvalidReadOnlyPropertyType(pd.getPropertyType())) {
+					// Ignore read-only properties such as ClassLoader - no need to bind to those
+					continue;
+				}
 				this.propertyDescriptorCache.put(pd.getName(), pd);
 			}
 		}
@@ -279,6 +293,12 @@ public class CachedIntrospectionResults {
 		}
 	}
 
+	private boolean isInvalidReadOnlyPropertyType(Class<?> returnType) {
+		return (returnType != null && (AutoCloseable.class.isAssignableFrom(returnType) ||
+				ClassLoader.class.isAssignableFrom(returnType) ||
+				ProtectionDomain.class.isAssignableFrom(returnType)));
+	}
+		
 	BeanInfo getBeanInfo() {
 		return this.beanInfo;
 	}

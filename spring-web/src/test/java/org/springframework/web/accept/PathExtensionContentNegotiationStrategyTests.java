@@ -76,7 +76,6 @@ public class PathExtensionContentNegotiationStrategyTests {
 
 	// SPR-10334
 
-	@Test
 	public void getMediaTypeFromFilenameNoJaf() {
 
 		this.servletRequest.setRequestURI("test.json");

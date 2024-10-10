@@ -1,10 +1,13 @@
 buildscript {
 	repositories {
 		maven { url "http://repo.springsource.org/plugins-release" }
+		mavenLocal()
 	}
+
 	dependencies {
-		classpath("org.springframework.build.gradle:propdeps-plugin:0.0.4")
-		classpath("org.springframework.build.gradle:docbook-reference-plugin:0.2.7")
+		classpath("org.springframework.build.gradle:propdeps-plugin:0.0.9.RELEASE")
+		classpath(files("libs/docbook-reference-plugin-0.3.2-SNAPSHOT.jar"))
+
 	}
 }
 
@@ -70,6 +73,7 @@ configure(allprojects) { project ->
 
 	repositories {
 		maven { url "http://repo.springsource.org/libs-release" }
+		maven { url "https://repo1.maven.org/maven2" }
 	}
 
 	dependencies {
@@ -119,7 +123,7 @@ configure(subprojects - project(":spring-build-src")) { subproject ->
 			expand(copyright: new Date().format("yyyy"), version: project.version)
 		}
 	}
-
+/*
 	javadoc {
 		description = "Generates project-level javadoc for use in -javadoc jar"
 
@@ -136,21 +140,21 @@ configure(subprojects - project(":spring-build-src")) { subproject ->
 		logging.captureStandardError LogLevel.INFO
 		logging.captureStandardOutput LogLevel.INFO // suppress "## warnings" message
 	}
-
+*/
 	task sourcesJar(type: Jar, dependsOn:classes) {
 		classifier = "sources"
 		from sourceSets.main.allJava.srcDirs
 		include "**/*.java", "**/*.aj"
 	}
-
+/*
 	task javadocJar(type: Jar) {
 		classifier = "javadoc"
 		from javadoc
 	}
-
+*/
 	artifacts {
 		archives sourcesJar
-		archives javadocJar
+		//archives javadocJar
 	}
 }
 
@@ -348,6 +352,11 @@ project("spring-context") {
 
 project("spring-tx") {
 	description = "Spring Transaction"
+	repositories {
+		maven { url "https://maven.repository.redhat.com/ga" }
+		mavenLocal()
+	}
+
 
 	dependencies {
 		optional(project(":spring-context")) // for JCA, @EnableTransactionManagement
@@ -460,6 +469,10 @@ project("spring-context-support") {
 
 project("spring-web") {
 	description = "Spring Web"
+	repositories {
+		mavenLocal()
+	}
+
 	dependencies {
 		compile(project(":spring-core"))
 		compile(project(":spring-beans")) // for MultiPartFilter
@@ -501,6 +514,12 @@ project("spring-web") {
 
 project("spring-orm") {
 	description = "Spring Object/Relational Mapping"
+	repositories {
+		maven { url "https://maven.repository.redhat.com/ga" }
+		maven { url "https://repo1.maven.org/maven2" }
+		mavenLocal()
+	}
+
 
 	compileTestJava {
 		// necessary to avoid java.lang.VerifyError on toplink compilation
@@ -569,7 +588,7 @@ project("spring-webmvc") {
 		optional("org.apache.tiles:tiles-servlet:2.1.2")
 		optional("net.sourceforge.jexcelapi:jxl:2.6.3")
 		optional("org.apache.poi:poi:3.0.2-FINAL")
-		optional("com.lowagie:itext:2.1.7")
+		compile("com.lowagie:itext:2.1.7")
 		optional("jasperreports:jasperreports:2.0.5") {
 			exclude group: "xml-apis", module: "xml-apis"
 		}
@@ -790,15 +809,17 @@ project("spring-aspects") {
 configure(rootProject) {
 	description = "Spring Framework"
 
-	apply plugin: "docbook-reference"
+	// apply plugin: "docbook-reference"
 	apply plugin: "groovy"
 	// apply plugin: "detect-split-packages"
 	apply from: "${gradleScriptDir}/jdiff.gradle"
 
+	/*
 	reference {
 		sourceDir = file("src/reference/docbook")
 		pdfFilename = "spring-framework-reference.pdf"
 	}
+*/
 
 	// TODO: DetectSplitPackagesPlugin fails in line 154 due to method not found on java.io.File.
 	// TODO: Possibly related to user rights or OS differences on OpenJDK 8; works fine on JDK 7.
@@ -870,7 +891,7 @@ configure(rootProject) {
 			classpath += files(subprojects.collect { it.sourceSets.main.compileClasspath })
 		}
 	}
-
+/*
 	task docsZip(type: Zip) {
 		group = "Distribution"
 		baseName = "spring-framework"
@@ -890,7 +911,7 @@ configure(rootProject) {
 			into "spring-framework-reference"
 		}
 	}
-
+*/
 	task schemaZip(type: Zip) {
 		group = "Distribution"
 		baseName = "spring-framework"
@@ -919,7 +940,7 @@ configure(rootProject) {
 		}
 	}
 
-	task distZip(type: Zip, dependsOn: [docsZip, schemaZip]) {
+	task distZip(type: Zip, dependsOn: [schemaZip]) {
 		group = "Distribution"
 		baseName = "spring-framework"
 		classifier = "dist"
@@ -935,11 +956,11 @@ configure(rootProject) {
 			into "${baseDir}"
 			expand(copyright: new Date().format("yyyy"), version: project.version)
 		}
-
+/*
 		from(zipTree(docsZip.archivePath)) {
 			into "${baseDir}/docs"
 		}
-
+*/
 		from(zipTree(schemaZip.archivePath)) {
 			into "${baseDir}/schema"
 		}
@@ -990,7 +1011,7 @@ configure(rootProject) {
 	}
 
 	artifacts {
-		archives docsZip
+		//archives docsZip
 		archives schemaZip
 		archives distZip
 	}

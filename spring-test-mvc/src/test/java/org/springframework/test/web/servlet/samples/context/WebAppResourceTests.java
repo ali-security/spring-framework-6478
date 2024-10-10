@@ -69,7 +69,6 @@ public class WebAppResourceTests {
 
 	// Resources served via <mvc:resources/>
 
-	@Test
 	public void resourceRequest() throws Exception {
 		this.mockMvc.perform(get("/resources/Spring.js"))
 			.andExpect(content().contentType("text/javascript"))
